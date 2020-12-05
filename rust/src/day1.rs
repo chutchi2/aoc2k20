@@ -1,28 +1,44 @@
-mod lib;
+use adventofcode::lib::*;
 use std::env;
 use std::io::prelude::*;
 use std::path::Path;
 
-fn _d1_p1(mut records: Vec<i64>, job_set: Vec<Vec<i64>>) -> std::result::Result<i64, ()> {
-    for job in job_set{
-        match job[0]{
-            1 => records[job[3] as usize] = records[job[1] as usize] + records[job[2] as usize],
-            2 => records[job[3] as usize] = records[job[1] as usize] * records[job[2] as usize],
-            99 => println!("Jobs done well!"),
-            _ => println!("Jobs done..."),
+fn _d1(records: Vec<i64>) -> std::result::Result<i64, ()> {
+    for num1 in &records{
+        for num2 in &records{
+            if ( num1 > &1000 && num2 > &1000){
+            } else{
+                let ret = num1 + num2;
+                let retta = num1*num2;
+                if ( ret == 2020){
+                    println!("{:?} {:?} {:?} {:?}",ret,num1,num2,retta);
+                }
+            }
         }
     }
     Ok(records[0])
 }
-
+fn _d1_p2(records: Vec<i64>) -> std::result::Result<i64, ()> {
+    for num1 in &records{
+        for num2 in &records{
+            for num3 in &records{
+                if (num1 > &0 && num2 > &0 && num3 > &0){
+                    let ret = num1 + num2 + num3;
+                    let retta = num1*num2*num3;
+                    if ( ret == 2020){
+                        println!("{:?} {:?} {:?} {:?} {:?}",ret,num1,num2,num3,retta);
+                    }
+                }
+            }
+        }
+    }
+    Ok(records[0])
+}
 pub fn d1() {
     let args: Vec<String> = env::args().collect();
     println!("{:?}", args[1]);
-    const path = Path::new(&args[1]);
-    const lines = lib::lines_from_file(path);
-    let records = lib::record_parser(lines);
-    let test_records = vec![1,1,1,4,99,5,6,0,99];
-    let jobs = lib::job_parser(&test_records);
-    let d1_p1_ret = _d1_p1(test_records,jobs);
-    println!("{}",d1_p1_ret.unwrap());
+    let path = Path::new(&args[1]);
+    let lines = lines_from_file(path);
+    let records = record_parser(lines);
+    let d1_p1_ret = _d1_p2(records);
 }
