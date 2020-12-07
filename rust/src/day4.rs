@@ -15,25 +15,19 @@ use std::path::Path;
 // cid (Country ID) - ignored, missing or not.
 
 fn _process_job(job: String) -> std::result::Result<bool, ()> {
-    let low: i64;
-    let high: i64;
-    let key_letter: char;
-    let password: String;
-
     let seperator = Regex::new(r"([ :#])+").expect("Invalid regex");
 
     let splits: Vec<_> = seperator.split(&job).into_iter().collect();
     let mut ecl: String = "".to_string();
     let mut pid: String = "".to_string();
     let mut eyr: u32 = 0;
-    let mut hcl: String = "".to_string(); //#fffffd
+    let mut hcl: String = "".to_string();
     let mut byr: u32 = 0;
     let mut iyr: u32 = 0;
-    let mut hgt: String = "".to_string(); // 183cm
-    let mut cid: u32 = 0;
+    let mut hgt: String = "".to_string();
+    let mut _cid: u32 = 0;
     let mut count = 0;
     if splits.len() >= 7 {
-        // let passport: Passport = Passport {splits[0]:splits[1],splits[2]:splits[3],splits[4]:splits[5],splits[6]:splits[7]};
         for &el in &splits {
             count += 1;
             match el {
@@ -44,7 +38,7 @@ fn _process_job(job: String) -> std::result::Result<bool, ()> {
                 "byr" => byr = splits[count].parse::<u32>().unwrap(),
                 "iyr" => iyr = splits[count].parse::<u32>().unwrap(),
                 "hgt" => hgt = String::from(splits[count]), // 183cm
-                "cid" => cid = splits[count].parse::<u32>().unwrap(),
+                "cid" => _cid = splits[count].parse::<u32>().unwrap(),
                 _ => println!("not a tag"),
             }
         }
@@ -103,8 +97,7 @@ fn _process_job(job: String) -> std::result::Result<bool, ()> {
 
 fn _d4(lines: Vec<String>) -> std::result::Result<i64, ()> {
     let mut count = 0;
-    let mut correct = false;
-    let mut jobs: Vec<String>;
+    let mut correct: bool;
     let mut job: String = String::from("");
     let mut line_val: Vec<char>;
     for line in lines {
