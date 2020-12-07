@@ -1,7 +1,7 @@
 use adventofcode::lib::*;
 use regex::Regex;
 use std::env;
-use std::path::Path; // 1.1.8
+use std::path::Path;
 
 fn _letter_checker(
     first: i64,
