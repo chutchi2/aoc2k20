@@ -3,122 +3,81 @@ use regex::Regex;
 use std::env;
 use std::path::Path;
 // Rules
-// byr (Birth Year) - four digits; at least 1920 and at most 2002.
-// iyr (Issue Year) - four digits; at least 2010 and at most 2020.
-// eyr (Expiration Year) - four digits; at least 2020 and at most 2030.
-// hgt (Height) - a number followed by either cm or in:
-//     If cm, the number must be at least 150 and at most 193.
-//     If in, the number must be at least 59 and at most 76.
-// hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
-// ecl (Eye Color) - exactly one of: amb blu brn gry grn hzl oth.
-// pid (Passport ID) - a nine-digit number, including leading zeroes.
-// cid (Country ID) - ignored, missing or not.
 
-fn _process_job(job: String) -> std::result::Result<bool, ()> {
-    let seperator = Regex::new(r"([ :#])+").expect("Invalid regex");
+// Every seat has a unique seat ID: multiply the row by 8, then add the column.
+// FBFBBFFRLR: row 44, column 5, seat ID 357.
+// BFFFBBFRRR: row 70, column 7, seat ID 567.
+// FFFBBBFRRR: row 14, column 7, seat ID 119.
+// BBFFBBFRLL: row 102, column 4, seat ID 820.
 
-    let splits: Vec<_> = seperator.split(&job).into_iter().collect();
-    let mut ecl: String = "".to_string();
-    let mut pid: String = "".to_string();
-    let mut eyr: u32 = 0;
-    let mut hcl: String = "".to_string();
-    let mut byr: u32 = 0;
-    let mut iyr: u32 = 0;
-    let mut hgt: String = "".to_string();
-    let mut _cid: u32 = 0;
-    let mut count = 0;
-    if splits.len() >= 7 {
-        for &el in &splits {
-            count += 1;
-            match el {
-                "ecl" => ecl = String::from(splits[count]),
-                "pid" => pid = String::from(splits[count]),
-                "eyr" => eyr = splits[count].parse::<u32>().unwrap(),
-                "hcl" => hcl = String::from(splits[count]), //#fffffd
-                "byr" => byr = splits[count].parse::<u32>().unwrap(),
-                "iyr" => iyr = splits[count].parse::<u32>().unwrap(),
-                "hgt" => hgt = String::from(splits[count]), // 183cm
-                "cid" => _cid = splits[count].parse::<u32>().unwrap(),
-                _ => println!("not a tag"),
-            }
-        }
-        // check number
-        let pid_as_no = pid.parse::<u32>().unwrap_or(0);
-        let pid_len = pid.chars().collect::<Vec<char>>().len();
-        let hcl_len = hcl.chars().collect::<Vec<char>>().len();
-        let height_parse = Regex::new(r"([ci])+").expect("Invalid regex");
-        let height: Vec<_> = height_parse.split(&hgt).into_iter().collect();
-        let mut is_bad_height = false;
-        let height_str = height[0].parse::<u32>().unwrap_or(0);
-        if height.len() > 1 {
-            match height[1] {
-                "m" => is_bad_height = height_str < 150 || height_str > 193,
-                "n" => is_bad_height = height_str < 59 || height_str > 76,
-                _ => println!("Not a height identifier: {}", height[1]),
-            }
-        } else {
-            is_bad_height = true;
-        }
-        let mut is_bad_eye = false;
-        let ecl2 = &ecl[..];
-        match ecl2 {
-            "amb" => println!("eye color: {}", ecl),
-            "blu" => println!("eye color: {}", ecl),
-            "brn" => println!("eye color: {}", ecl),
-            "gry" => println!("eye color: {}", ecl),
-            "grn" => println!("eye color: {}", ecl),
-            "hzl" => println!("eye color: {}", ecl),
-            "oth" => println!("eye color: {}", ecl),
-            _ => is_bad_eye = true,
-        }
-        if is_bad_height
-            || ecl == ""
-            || pid_as_no == 0
-            || pid_len != 9
-            || iyr < 2010
-            || iyr > 2020
-            || eyr < 2020
-            || eyr > 2030
-            || hcl_len != 6
-            || byr < 1920
-            || byr > 2002
-            || iyr == 0
-            || hgt == ""
-            || is_bad_eye
-        {
-            Ok(false)
-        } else {
-            Ok(true)
-        }
-    } else {
-        Ok(false)
+fn update_coords(coords: &mut Vec<usize>, direction: char) -> std::result::Result<(),()> {
+    let mut front: usize = coords[0];
+    let mut back: usize = coords[1];
+    let mut left: usize = coords[2];
+    let mut right: usize = coords[3];
+    match direction {
+        'F' => coords[1] = (back + 1) / 2 - 1,
+        'B' => coords[0] = (front + 1) / 2 - 1,
+        'L' => coords[3] = (right + 1) / 2 - 1,
+        'R' => coords[2] = (left + 1) / 2 - 1,
+        _ => println!("Broken instruction"),
     }
+
+    Ok(())
 }
 
-fn _d5(lines: Vec<String>) -> std::result::Result<i64, ()> {
-    let mut count = 0;
-    let mut correct: bool;
-    let mut job: String = String::from("");
-    let mut line_val: Vec<char>;
-    for line in lines {
-        line_val = line.chars().collect();
-        if line_val.len() == 0 {
-            correct = _process_job(job).unwrap();
-            job = String::from("");
-            if correct {
-                count += 1;
-            }
-        } else {
-            job = job + " " + &line;
+fn something_new(lines: Vec<String>) -> std::result::Result<usize, ()> {
+    let front: usize = 0;
+    let back: usize = 127;
+    let left: usize = 0;
+    let right: usize = 7;
+    let mut dirs: Vec<char>;
+    let mut pass_no = 0;
+    let mut pass_nos = Vec::new();
+    for line in &lines {
+        let mut coords = vec![front, back, left, right];
+        dirs = line.chars().collect();
+        for dir in dirs {
+            update_coords(&mut coords, dir);
+        }
+        if coords[0] == coords[1] && coords[2] == coords[3] {
+            pass_no = coords[0] * 8 + coords[2];
+            pass_nos.push(pass_no)
         }
     }
-    Ok(count)
+    let mut curr_max = 0;
+    for no in pass_nos {
+        if no > curr_max {
+            curr_max = no;
+        }
+    }
+    Ok(curr_max)
 }
+// fn _d5(lines: Vec<String>) -> std::result::Result<usize, ()> {
+//     let mut count = 0;
+//     let mut interim: Vec<char>;
+//     let mut tickets = Vec::new();
+//     let mut rows = Vec::new();
+//     let seat_per_row: usize = 8;
+//     let total_rows: usize = 129;
+//     let seat_row = vec![1, 2, 3, 4, 5, 6, 7, 8];
+//     let passenger_no: usize = lines.len();
+//     let coords = vec![0, 0, 0];
+//     for i in 1..total_rows {
+//         rows.push(i);
+//     }
+//     for line in &lines {
+//         interim = line.chars().collect();
+//         tickets.push(interim);
+//     }
+//     println!("{:?}", seat_row);
+//     Ok(total_rows)
+// }
 
 pub fn d5() {
     let args: Vec<String> = env::args().collect();
     let path = Path::new(&args[1]);
     let lines = lines_from_file(path);
-    let d5 = _d5(lines);
-    println!("Count of valid passports: {:?}", d5);
+    let d5 = something_new(lines);
+    println!("Highest ticket no.: {:?}", d5);
 }
