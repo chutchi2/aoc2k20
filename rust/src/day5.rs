@@ -10,74 +10,66 @@ use std::path::Path;
 // FFFBBBFRRR: row 14, column 7, seat ID 119.
 // BBFFBBFRLL: row 102, column 4, seat ID 820.
 
-fn update_coords(coords: &mut Vec<usize>, direction: char) -> std::result::Result<(),()> {
-    let mut front: usize = coords[0];
-    let mut back: usize = coords[1];
-    let mut left: usize = coords[2];
-    let mut right: usize = coords[3];
-    match direction {
-        'F' => coords[1] = (back + 1) / 2 - 1,
-        'B' => coords[0] = (front + 1) / 2 - 1,
-        'L' => coords[3] = (right + 1) / 2 - 1,
-        'R' => coords[2] = (left + 1) / 2 - 1,
-        _ => println!("Broken instruction"),
-    }
-
-    Ok(())
-}
-
-fn something_new(lines: Vec<String>) -> std::result::Result<usize, ()> {
-    let front: usize = 0;
-    let back: usize = 127;
-    let left: usize = 0;
-    let right: usize = 7;
-    let mut dirs: Vec<char>;
-    let mut pass_no = 0;
+fn _d5(lines: Vec<String>) -> std::result::Result<isize, ()> {
+    let mut pass_no: isize = 0;
     let mut pass_nos = Vec::new();
+    let mut pass_nos_list = Vec::new();
     for line in &lines {
-        let mut coords = vec![front, back, left, right];
-        dirs = line.chars().collect();
-        for dir in dirs {
-            update_coords(&mut coords, dir);
+        let mut seats = Vec::new();
+        let mut row_bins = Vec::new();
+        let mut seat_bins = Vec::new();
+        let mut row_as_bin: String;
+        let mut seat_as_bin: String;
+        let mut row_no;
+        let mut seat_no;
+        seats = line.chars().collect();
+        for seat in seats {
+            match seat {
+                'F' => row_bins.push('0'),
+                'B' => row_bins.push('1'),
+                'L' => seat_bins.push('0'),
+                'R' => seat_bins.push('1'),
+                _ => println!("Broken instruction"),
+            }
         }
-        if coords[0] == coords[1] && coords[2] == coords[3] {
-            pass_no = coords[0] * 8 + coords[2];
-            pass_nos.push(pass_no)
+        row_as_bin = row_bins.iter().collect();
+        seat_as_bin = seat_bins.iter().collect();
+        row_no = isize::from_str_radix(&row_as_bin, 2).unwrap();
+        seat_no = isize::from_str_radix(&seat_as_bin, 2).unwrap();
+        pass_nos.push(vec![row_no, seat_no])
+    }
+    let mut curr_max: isize = 0;
+    for no in &pass_nos {
+        pass_no = no[0] * 8 + no[1];
+        pass_nos_list.push(pass_no);
+        if pass_no > curr_max {
+            curr_max = pass_no;
         }
     }
-    let mut curr_max = 0;
-    for no in pass_nos {
-        if no > curr_max {
-            curr_max = no;
+    pass_nos_list.sort();
+    let mut last_seat_ids_index = pass_nos_list.len() - 1;
+    let mut current_index = 0;
+    let mut my_seat_id;
+    while current_index < last_seat_ids_index - 1 {
+        println!(
+            "{:?} {:?}",
+            pass_nos_list[current_index + 1],
+            pass_nos_list[current_index]
+        );
+        if pass_nos_list[current_index + 1] - pass_nos_list[current_index] == 2 {
+            my_seat_id = pass_nos_list[current_index] + 1;
+            println!("{:?}", my_seat_id);
+            break;
         }
+        current_index += 1;
     }
     Ok(curr_max)
 }
-// fn _d5(lines: Vec<String>) -> std::result::Result<usize, ()> {
-//     let mut count = 0;
-//     let mut interim: Vec<char>;
-//     let mut tickets = Vec::new();
-//     let mut rows = Vec::new();
-//     let seat_per_row: usize = 8;
-//     let total_rows: usize = 129;
-//     let seat_row = vec![1, 2, 3, 4, 5, 6, 7, 8];
-//     let passenger_no: usize = lines.len();
-//     let coords = vec![0, 0, 0];
-//     for i in 1..total_rows {
-//         rows.push(i);
-//     }
-//     for line in &lines {
-//         interim = line.chars().collect();
-//         tickets.push(interim);
-//     }
-//     println!("{:?}", seat_row);
-//     Ok(total_rows)
-// }
 
 pub fn d5() {
     let args: Vec<String> = env::args().collect();
     let path = Path::new(&args[1]);
     let lines = lines_from_file(path);
-    let d5 = something_new(lines);
+    let d5 = _d5(lines);
     println!("Highest ticket no.: {:?}", d5);
 }
