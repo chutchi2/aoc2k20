@@ -20,7 +20,7 @@ fn _parse_opcode(job: String, index: i64) -> std::result::Result<(i64, i64), ()>
     let mut index_change = 0;
     let mut acc_change: i64 = 0;
     let mut op: &str = "";
-    let mut arg:i64 = 0;
+    let mut arg: i64 = 0;
     if split_codes.len() > 0 {
         op = split_codes[0];
         arg = split_codes[1].parse::<i64>().unwrap();
@@ -28,7 +28,7 @@ fn _parse_opcode(job: String, index: i64) -> std::result::Result<(i64, i64), ()>
             "nop" => {
                 acc_change = 0;
                 index_change = 1;
-            },
+            }
             "acc" => {
                 acc_change = arg;
                 index_change = 1;
@@ -51,12 +51,18 @@ fn _d8(lines: Vec<String>) -> std::result::Result<i64, ()> {
     let mut curr_index: i64 = 0;
     let mut op_count = 0;
     let mut curr_code: String;
-    let mut lines_visited: Vec<i64>=Vec::new();
+    let mut lines_visited: Vec<i64> = Vec::new();
+    let mut modified_lines = lines.to_vec();
     while op_count < lines.len() - 1 {
         if lines_visited.contains(&curr_index) {
+            modified_lines[curr_index as usize - 2] = "nop +0".to_string();
+            println!("About to recurse");
+            accumulator = _d8(modified_lines).unwrap();
             break;
-        }
-        else if curr_index as usize >= lines.len() {
+        } else if curr_index as usize >= lines.len() {
+            break;
+        } else if lines[curr_index as usize].len() == 0 {
+            println!("The end i guess");
             break;
         } else {
             lines_visited.push(curr_index);

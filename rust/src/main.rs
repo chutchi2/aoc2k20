@@ -1,5 +1,5 @@
-mod day8;
+mod day9;
 fn main() {
-    day8::d8();
+    day9::d9();
     println!("Advent Complete");
 }
