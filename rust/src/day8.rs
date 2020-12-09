@@ -13,23 +13,29 @@ use std::path::Path;
 // jmp -4  | 5
 // acc +6  |
 // Goal: get accumulator value before code loops
+
 fn _parse_opcode(job: String, index: i64) -> std::result::Result<(i64, i64), ()> {
     let seperator = Regex::new(r"([ +])+").expect("Invalid regex");
     let split_codes: Vec<_> = seperator.split(&job).into_iter().collect();
-    let mut index_change = index;
+    let mut index_change = 0;
     let mut acc_change: i64 = 0;
+    let mut op: &str = "";
+    let mut arg:i64 = 0;
     if split_codes.len() > 0 {
-        let op = split_codes[0];
-        let arg = split_codes[1].parse::<i64>().unwrap();
-        println!("{:?}",arg);
+        op = split_codes[0];
+        arg = split_codes[1].parse::<i64>().unwrap();
         match op {
-            "nop" => index_change = 1 + index,
+            "nop" => {
+                acc_change = 0;
+                index_change = 1;
+            },
             "acc" => {
                 acc_change = arg;
-                index_change = 1 + index;
+                index_change = 1;
             }
             "jmp" => {
-                index_change = arg + index;
+                acc_change = 0;
+                index_change = arg;
             }
             _ => println!("Invalid Opcode"),
         }
@@ -42,15 +48,24 @@ fn _d8(lines: Vec<String>) -> std::result::Result<i64, ()> {
     let mut count = 0;
     let mut line_val: Vec<char>;
     let mut accumulator: i64 = 0;
-    let mut curr_index:i64 = 0;
+    let mut curr_index: i64 = 0;
     let mut op_count = 0;
     let mut curr_code: String;
-    while op_count < lines.len()-1 {
-        curr_code = lines[curr_index as usize].to_string();
-        let (index_change, acc_change) = _parse_opcode(curr_code,curr_index).unwrap();
-        curr_index += index_change;
-        accumulator += acc_change;
-        op_count += 1;
+    let mut lines_visited: Vec<i64>=Vec::new();
+    while op_count < lines.len() - 1 {
+        if lines_visited.contains(&curr_index) {
+            break;
+        }
+        else if curr_index as usize >= lines.len() {
+            break;
+        } else {
+            lines_visited.push(curr_index);
+            curr_code = lines[curr_index as usize].to_string();
+            let (index_change, acc_change) = _parse_opcode(curr_code, curr_index).unwrap();
+            curr_index += index_change;
+            accumulator += acc_change;
+            op_count += 1;
+        }
     }
     Ok(accumulator)
 }
@@ -60,5 +75,5 @@ pub fn d8() {
     let path = Path::new(&args[1]);
     let lines = lines_from_file(path);
     let d8 = _d8(lines);
-    println!("Count of valid passports: {:?}", d8);
+    println!("accumulator: {:?}", d8);
 }
